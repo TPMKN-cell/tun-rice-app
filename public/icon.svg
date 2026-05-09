@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#F5F0E8"/>
+  <circle cx="256" cy="256" r="200" fill="#EDE5D5" stroke="#E8D8C0" stroke-width="8"/>
+  <text x="256" y="330" font-family="serif" font-size="220" font-weight="bold" fill="#C0392B" text-anchor="middle">ထ</text>
+  <text x="256" y="430" font-family="serif" font-size="52" font-weight="600" fill="#A07848" text-anchor="middle">ဆန်ဆိုင်</text>
+</svg>

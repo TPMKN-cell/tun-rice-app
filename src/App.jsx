@@ -1457,18 +1457,178 @@ const PAGES = [
   { id:'search',    label:'Search',     sub:'Search & Filter' },
 ]
 
+// ── PIN Lock Screen ──────────────────────────────────────────────
+const CORRECT_PIN = '1234' // ← Change this to your PIN
+
+function PinScreen({ onUnlock }) {
+  const [pin, setPin]       = useState('')
+  const [shake, setShake]   = useState(false)
+  const [error, setError]   = useState(false)
+
+  const handleKey = (k) => {
+    if (pin.length >= 4) return
+    const next = pin + k
+    setPin(next)
+    if (next.length === 4) {
+      if (next === CORRECT_PIN) {
+        setTimeout(() => onUnlock(), 300)
+      } else {
+        setShake(true); setError(true)
+        setTimeout(() => { setPin(''); setShake(false); setError(false) }, 900)
+      }
+    }
+  }
+
+  const handleDel = () => setPin(p => p.slice(0, -1))
+
+  return (
+    <>
+      <style>{`
+        @keyframes pinShake {
+          0%,100%{transform:translateX(0)}
+          20%{transform:translateX(-8px)}
+          40%{transform:translateX(8px)}
+          60%{transform:translateX(-6px)}
+          80%{transform:translateX(6px)}
+        }
+        .pin-wrap {
+          width:100vw; height:100vh;
+          background:var(--ivory);
+          display:flex; flex-direction:column;
+          align-items:center; justify-content:center;
+          font-family:var(--font);
+          position:relative;
+        }
+        .pin-logo {
+          width:72px; height:72px;
+          border-radius:50%;
+          background:var(--surface);
+          border:2px solid var(--border2);
+          display:flex; align-items:center; justify-content:center;
+          margin-bottom:14px;
+          box-shadow:0 4px 20px rgba(160,120,72,0.15);
+        }
+        .pin-logo-word {
+          font-family:var(--serif);
+          font-size:28px; font-weight:600;
+          color:#C0392B;
+        }
+        .pin-title {
+          font-family:var(--serif);
+          font-size:20px; font-weight:600;
+          color:var(--text); margin-bottom:4px;
+        }
+        .pin-sub {
+          font-size:11px; color:var(--text3);
+          letter-spacing:1px; text-transform:uppercase;
+          margin-bottom:36px;
+        }
+        .pin-dots {
+          display:flex; gap:16px; margin-bottom:40px;
+          animation:${shake?'pinShake .6s ease':'none'};
+        }
+        .pin-dot {
+          width:14px; height:14px;
+          border-radius:50%;
+          border:2px solid ${error?'var(--red)':'var(--border2)'};
+          background:transparent;
+          transition:all .15s;
+        }
+        .pin-dot.filled {
+          background:${error?'var(--red)':'var(--accent)'};
+          border-color:${error?'var(--red)':'var(--accent)'};
+        }
+        .pin-error {
+          font-size:12px; color:var(--red);
+          margin-top:-32px; margin-bottom:16px;
+          font-weight:500; letter-spacing:.3px;
+          min-height:18px;
+        }
+        .pin-grid {
+          display:grid;
+          grid-template-columns:repeat(3,72px);
+          grid-template-rows:repeat(4,72px);
+          gap:10px;
+        }
+        .pin-key {
+          width:72px; height:72px;
+          border-radius:50%;
+          background:var(--surface);
+          border:1px solid var(--border2);
+          display:flex; flex-direction:column;
+          align-items:center; justify-content:center;
+          cursor:pointer;
+          font-family:var(--mono);
+          font-size:22px; font-weight:600;
+          color:var(--text);
+          transition:all .12s;
+          user-select:none;
+          box-shadow:0 1px 4px rgba(44,40,32,0.08);
+        }
+        .pin-key:hover { background:var(--surface2); border-color:var(--accent); }
+        .pin-key:active { transform:scale(.92); background:var(--accent-dim); }
+        .pin-key-sub { font-size:8px; color:var(--text3); letter-spacing:1.5px; margin-top:2px; font-family:var(--font); }
+        .pin-key.del { font-size:18px; background:transparent; border-color:transparent; box-shadow:none; color:var(--text2); }
+        .pin-key.empty { pointer-events:none; background:transparent; border:none; box-shadow:none; }
+        .pin-dev {
+          position:absolute; bottom:24px;
+          font-size:11px; color:var(--text3);
+        }
+        .pin-dev strong { color:var(--accent); font-weight:600; }
+      `}</style>
+      <div className="pin-wrap">
+        <div className="pin-logo">
+          <span className="pin-logo-word">ထွန်း</span>
+        </div>
+        <div className="pin-title">ထွန်းဆန်ဆိုင်</div>
+        <div className="pin-sub">Enter PIN to continue</div>
+        <div className="pin-dots">
+          {[0,1,2,3].map(i=>(
+            <div key={i} className={`pin-dot${pin.length>i?' filled':''}`}/>
+          ))}
+        </div>
+        <div className="pin-error">{error?'Incorrect PIN — try again':''}</div>
+        <div className="pin-grid">
+          {['1','2','3','4','5','6','7','8','9'].map(k=>(
+            <button key={k} className="pin-key" onClick={()=>handleKey(k)}>
+              {k}
+              <span className="pin-key-sub">
+                {k==='2'?'ABC':k==='3'?'DEF':k==='4'?'GHI':k==='5'?'JKL':k==='6'?'MNO':k==='7'?'PQRS':k==='8'?'TUV':k==='9'?'WXYZ':''}
+              </span>
+            </button>
+          ))}
+          <button className="pin-key empty" />
+          <button className="pin-key" onClick={()=>handleKey('0')}>0</button>
+          <button className="pin-key del" onClick={handleDel}>⌫</button>
+        </div>
+        <div className="pin-dev">Developed by <strong>Shane</strong></div>
+      </div>
+    </>
+  )
+}
+
 export default function App() {
   const store  = useStore()
   const [page, setPage]       = useState('dashboard')
   const [drawer, setDrawer]   = useState(false)
   const [loading, setLoading] = useState(true)
-  const [toast, setToast]     = useState({ msg:'', show:false })
+  const [unlocked, setUnlocked] = useState(() => {
+    // Stay unlocked for 8 hours after last unlock
+    const t = localStorage.getItem('pin_unlocked')
+    return t && (Date.now() - parseInt(t)) < 8 * 60 * 60 * 1000
+  })
+  const [toast, setToast] = useState({ msg:'', show:false })
   const timerRef = useRef(null)
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2200)
     return () => clearTimeout(t)
   }, [])
+
+  const handleUnlock = () => {
+    localStorage.setItem('pin_unlocked', Date.now().toString())
+    setUnlocked(true)
+  }
 
   const showToast = useCallback((msg) => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -1502,7 +1662,6 @@ export default function App() {
   if (loading) return (
     <>
       <style>{css}{`
-        @keyframes fadeUp {
           from { opacity:0; transform:translateY(18px); }
           to   { opacity:1; transform:translateY(0); }
         }
@@ -1619,6 +1778,8 @@ export default function App() {
       </div>
     </>
   )
+
+  if (!unlocked) return <PinScreen onUnlock={handleUnlock} />
 
   return (
     <>
