@@ -162,9 +162,57 @@ const css = `
   .bnav-pip { width: 4px; height: 4px; border-radius: 50%; background: var(--stone); opacity:.5; }
   .bnav-active .bnav-pip { background: var(--accent); opacity:1; }
 
+  /* ── Hamburger button ── */
+  .ham-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .ham-btn span {
+    display: block;
+    width: 20px; height: 2px;
+    background: var(--text2);
+    border-radius: 2px;
+    transition: background .15s;
+  }
+  .ham-btn:hover span { background: var(--accent); }
+
+  /* ── Mobile drawer overlay ── */
+  .drawer-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(44,40,32,0.45);
+    z-index: 98;
+  }
+  .drawer-overlay.open { display: block; }
+
+  /* ── Mobile sidebar drawer ── */
+  .sidebar-drawer {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 240px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border2);
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+  }
+  .sidebar-drawer.open { transform: translateX(0); }
+
   @media(max-width:640px){
     .sidebar{ display: none; }
     .bnav{ display: flex; }
+    .ham-btn{ display: flex; }
     .content{ padding: 14px 12px calc(90px + env(safe-area-inset-bottom, 0px)) 12px; background: var(--bg); }
     .topbar{ padding: 0 14px; }
   }
@@ -1411,12 +1459,12 @@ const PAGES = [
 
 export default function App() {
   const store  = useStore()
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage]       = useState('dashboard')
+  const [drawer, setDrawer]   = useState(false)
   const [loading, setLoading] = useState(true)
-  const [toast, setToast] = useState({ msg:'', show:false })
+  const [toast, setToast]     = useState({ msg:'', show:false })
   const timerRef = useRef(null)
 
-  // Show loading screen for 2.2 seconds on mount
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2200)
     return () => clearTimeout(t)
@@ -1428,8 +1476,28 @@ export default function App() {
     timerRef.current = setTimeout(()=>setToast(t=>({...t,show:false})), 2600)
   }, [])
 
+  const goPage = (id) => { setPage(id); setDrawer(false) }
   const cur      = PAGES.find(p=>p.id===page)
   const PageComp = { dashboard:Dashboard, purchase:Purchase, payment:Payment, stock:Stock, search:Search }[page]
+
+  const SidebarContent = () => (
+    <>
+      <div className="brand">
+        <div className="brand-mark">ထွန်းဆန်ဆိုင်</div>
+        <div className="brand-name">Stock<br/>Availability</div>
+        <div className="brand-sub">Stock Availability App</div>
+      </div>
+      <nav className="nav">
+        {PAGES.map(p=>(
+          <div key={p.id} className={`nav-item${page===p.id?' active':''}`} onClick={()=>goPage(p.id)}>
+            <div className="nav-dot" />
+            {p.label}
+          </div>
+        ))}
+      </nav>
+      <div className="nav-footer">v2.0 · Vite + React</div>
+    </>
+  )
 
   if (loading) return (
     <>
@@ -1556,25 +1624,25 @@ export default function App() {
     <>
       <style>{css}</style>
       <div className="app">
+
+        {/* Desktop sidebar */}
         <aside className="sidebar">
-          <div className="brand">
-            <div className="brand-mark">ထွန်းဆန်ဆိုင်</div>
-            <div className="brand-name">Stock<br/>Availability</div>
-            <div className="brand-sub">Stock Availability App</div>
-          </div>
-          <nav className="nav">
-            {PAGES.map(p=>(
-              <div key={p.id} className={`nav-item${page===p.id?' active':''}`} onClick={()=>setPage(p.id)}>
-                <div className="nav-dot" />
-                {p.label}
-              </div>
-            ))}
-          </nav>
-          <div className="nav-footer">v2.0 · Vite + React</div>
+          <SidebarContent />
         </aside>
+
+        {/* Mobile drawer overlay */}
+        <div className={`drawer-overlay${drawer?' open':''}`} onClick={()=>setDrawer(false)} />
+
+        {/* Mobile sidebar drawer */}
+        <div className={`sidebar-drawer${drawer?' open':''}`}>
+          <SidebarContent />
+        </div>
 
         <div className="main">
           <div className="topbar">
+            <button className="ham-btn" onClick={()=>setDrawer(v=>!v)}>
+              <span/><span/><span/>
+            </button>
             <span className="page-title">{cur.label}</span>
             <span className="page-sub">{cur.sub}</span>
           </div>
@@ -1585,7 +1653,7 @@ export default function App() {
 
         <nav className="bnav">
           {PAGES.map(p=>(
-            <div key={p.id} className={`bnav-item${page===p.id?' bnav-active':''}`} onClick={()=>setPage(p.id)}>
+            <div key={p.id} className={`bnav-item${page===p.id?' bnav-active':''}`} onClick={()=>goPage(p.id)}>
               <div className="bnav-pip" />
               <span className="bnav-label">{p.label}</span>
             </div>
